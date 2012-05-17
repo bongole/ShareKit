@@ -47,7 +47,9 @@
 
 - (void)start
 {    
-    [request prepare];
+    if ( [[request allHTTPHeaderFields] valueForKey:@"X-Verify-Credentials-Authorization"] == nil ){
+        [request prepare];
+    }
 	
 	if (connection)
 		[connection release];

@@ -592,7 +592,7 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 	if([item customValueForKey:@"profile_update"]){
 		serviceURL = [NSURL URLWithString:@"https://api.twitter.com/1/account/update_profile_image.json"];
 	} else {
-		serviceURL = [NSURL URLWithString:@"https://api.twitter.com/1/account/verify_credentials.xml"];
+		serviceURL = [NSURL URLWithString:@"https://api.twitter.com/1/account/verify_credentials.json"];
 	}
 	
 	OAMutableURLRequest *oRequest = [[OAMutableURLRequest alloc] initWithURL:serviceURL
@@ -613,14 +613,12 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 		[oRequest release];
 		oRequest = nil;
 		
-		serviceURL = [NSURL URLWithString:@"https://yfrog.com/api/xauth_upload"];
-		oRequest = [[OAMutableURLRequest alloc] initWithURL:serviceURL
-																 consumer:consumer
-																	 token:accessToken
-																	 realm:@"https://api.twitter.com/"
-													 signatureProvider:signatureProvider];
-		[oRequest setHTTPMethod:@"POST"];
-		[oRequest setValue:@"https://api.twitter.com/1/account/verify_credentials.xml" forHTTPHeaderField:@"X-Auth-Service-Provider"];
+		//serviceURL = [NSURL URLWithString:@"https://yfrog.com/api/xauth_upload"];
+        //serviceURL = [NSURL URLWithString:@"http://api.twitpic.com/2/upload.xml"];
+        serviceURL = [NSURL URLWithString:@"http://im.twitvid.com/api/uploadAndPost"];
+		oRequest = [[OAMutableURLRequest alloc] initWithURL:serviceURL];
+        [oRequest setHTTPMethod:@"POST"];
+		[oRequest setValue:@"https://api.twitter.com/1/account/verify_credentials.json" forHTTPHeaderField:@"X-Auth-Service-Provider"];
 		[oRequest setValue:oauthHeader forHTTPHeaderField:@"X-Verify-Credentials-Authorization"];
 	}
 	
@@ -652,7 +650,7 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 		[body appendData:[[item customValueForKey:@"status"] dataUsingEncoding:NSUTF8StringEncoding]];
 		[body appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];	
 	}
-	
+
 	[body appendData:[[NSString stringWithFormat:@"--%@--\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
 	
 	// setting the body of the post to the reqeust
@@ -674,13 +672,13 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 
 - (void)sendDataTicket:(OAServiceTicket *)ticket didFinishWithData:(NSData *)data {
 	// TODO better error handling here
-	// SHKLog([[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+	SHKLog([[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
 	if (ticket.didSucceed) {
 		// Finished uploading Image, now need to posh the message and url in twitter
 		NSString *dataString = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
-		NSRange startingRange = [dataString rangeOfString:@"<mediaurl>" options:NSCaseInsensitiveSearch];
+		NSRange startingRange = [dataString rangeOfString:@"<media_url>" options:NSCaseInsensitiveSearch];
 		//SHKLog(@"found start string at %d, len %d",startingRange.location,startingRange.length);
-		NSRange endingRange = [dataString rangeOfString:@"</mediaurl>" options:NSCaseInsensitiveSearch];
+		NSRange endingRange = [dataString rangeOfString:@"</media_url>" options:NSCaseInsensitiveSearch];
 		//SHKLog(@"found end string at %d, len %d",endingRange.location,endingRange.length);
 		
 		if (startingRange.location != NSNotFound && endingRange.location != NSNotFound) {
