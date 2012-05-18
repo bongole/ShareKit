@@ -37,6 +37,7 @@
 #import <objc/runtime.h>
 #import <objc/message.h>
 #import <MessageUI/MessageUI.h>
+#import "TiLocale.h"
 
 NSString * SHKLocalizedStringFormat(NSString* key);
 NSString * const SHKHideCurrentViewFinishedNotification = @"SHKHideCurrentViewFinished";
@@ -762,7 +763,13 @@ NSString* SHKLocalizedStringFormat(NSString* key)
 NSString* SHKLocalizedString(NSString* key, ...) 
 {
 	// Localize the format
-	NSString *localizedStringFormat = SHKLocalizedStringFormat(key);
+	NSString *localizedStringFormat = nil;
+    if (NSClassFromString(@"TiLocale")) {
+        localizedStringFormat = [TiLocale getString:key comment:key];
+    }
+    else{
+        localizedStringFormat = SHKLocalizedStringFormat(key);
+    }
 	
 	va_list args;
     va_start(args, key);

@@ -58,5 +58,6 @@
 - (void)sendUserInfo:(OAServiceTicket *)ticket didFailWithError:(NSError*)error;
 
 - (void)followMe;
+- (BOOL)prepareItem;
 
 @end
