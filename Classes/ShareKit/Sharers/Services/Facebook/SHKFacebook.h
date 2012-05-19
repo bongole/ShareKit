@@ -30,7 +30,7 @@
 #import "SHKSharer.h"
 #import "SHKCustomFormControllerLargeTextField.h"
 
-@interface SHKFacebook : SHKSharer <FBSessionDelegate, FBDialogDelegate, FBRequestDelegate, SHKFormControllerLargeTextFieldDelegate>
+@interface SHKFacebook : SHKSharer <FBSessionDelegate2, FBDialogDelegate2, FBRequestDelegate2, SHKFormControllerLargeTextFieldDelegate>
 
 + (BOOL)handleOpenURL:(NSURL*)url;
 
