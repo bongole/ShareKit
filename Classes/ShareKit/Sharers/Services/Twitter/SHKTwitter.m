@@ -605,21 +605,35 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 	if([item customValueForKey:@"profile_update"]){
 		[oRequest prepare];
 	} else {
-		[oRequest prepare];
-		
-		NSDictionary * headerDict = [oRequest allHTTPHeaderFields];
-		NSString * oauthHeader = [NSString stringWithString:[headerDict valueForKey:@"Authorization"]];
-		
-		[oRequest release];
-		oRequest = nil;
-		
-		//serviceURL = [NSURL URLWithString:@"https://yfrog.com/api/xauth_upload"];
-        //serviceURL = [NSURL URLWithString:@"http://api.twitpic.com/2/upload.xml"];
-        serviceURL = [NSURL URLWithString:@"http://im.twitvid.com/api/uploadAndPost"];
-		oRequest = [[OAMutableURLRequest alloc] initWithURL:serviceURL];
-        [oRequest setHTTPMethod:@"POST"];
-		[oRequest setValue:@"https://api.twitter.com/1/account/verify_credentials.json" forHTTPHeaderField:@"X-Auth-Service-Provider"];
-		[oRequest setValue:oauthHeader forHTTPHeaderField:@"X-Verify-Credentials-Authorization"];
+        if( item.shareType == SHKShareTypeVideo ){
+            [oRequest prepare];
+            
+            NSDictionary * headerDict = [oRequest allHTTPHeaderFields];
+            NSString * oauthHeader = [NSString stringWithString:[headerDict valueForKey:@"Authorization"]];
+            
+            [oRequest release];
+            oRequest = nil;
+            
+            //serviceURL = [NSURL URLWithString:@"https://yfrog.com/api/xauth_upload"];
+            //serviceURL = [NSURL URLWithString:@"http://api.twitpic.com/2/upload.xml"];
+            serviceURL = [NSURL URLWithString:@"http://im.twitvid.com/api/uploadAndPost"];
+            
+            oRequest = [[OAMutableURLRequest alloc] initWithURL:serviceURL];
+            [oRequest setHTTPMethod:@"POST"];
+            [oRequest setValue:@"https://api.twitter.com/1/account/verify_credentials.json" forHTTPHeaderField:@"X-Auth-Service-Provider"];
+            [oRequest setValue:oauthHeader forHTTPHeaderField:@"X-Verify-Credentials-Authorization"];
+        }
+        else{
+            [oRequest release];
+            oRequest = nil;
+            oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:@"https://upload.twitter.com/1/statuses/update_with_media.xml"]
+                                                                            consumer:consumer
+                                                                               token:accessToken
+                                                                               realm:nil
+                                                                   signatureProvider:nil];
+            
+            [oRequest setHTTPMethod:@"POST"];
+        }
 	}
 	
 	
@@ -632,7 +646,14 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 	if([item customValueForKey:@"profile_update"]){
 		dispKey = [NSString stringWithFormat:@"Content-Disposition: form-data; name=\"image\"; filename=\"%@\"\r\n", filename];
 	} else {
-		dispKey = [NSString stringWithFormat:@"Content-Disposition: form-data; name=\"media\"; filename=\"%@\"\r\n", filename];
+        switch (item.shareType) {
+            case SHKShareTypeVideo:
+                dispKey = [NSString stringWithFormat:@"Content-Disposition: form-data; name=\"media\"; filename=\"%@\"\r\n", filename];
+                break;
+            default:
+                dispKey = [NSString stringWithFormat:@"Content-Disposition: form-data; name=\"media[]\"; filename=\"%@\"\r\n", filename];
+                break;
+        }
 	}
 	
 	NSString *mimeT = [NSString stringWithFormat:@"Content-Type: %@\r\n\r\n", mimeType];
@@ -646,7 +667,14 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 		// no ops
 	} else {
 		[body appendData:[[NSString stringWithFormat:@"--%@\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
-		[body appendData:[[NSString stringWithString:@"Content-Disposition: form-data; name=\"message\"\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+         switch (item.shareType) {
+            case SHKShareTypeVideo:
+                [body appendData:[[NSString stringWithString:@"Content-Disposition: form-data; name=\"message\"\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+                break;
+            default:
+                [body appendData:[[NSString stringWithString:@"Content-Disposition: form-data; name=\"status\"\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+                 break;
+        }
 		[body appendData:[[item customValueForKey:@"status"] dataUsingEncoding:NSUTF8StringEncoding]];
 		[body appendData:[@"\r\n" dataUsingEncoding:NSUTF8StringEncoding]];	
 	}
