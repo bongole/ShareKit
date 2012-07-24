@@ -605,7 +605,18 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 	if([item customValueForKey:@"profile_update"]){
 		[oRequest prepare];
 	} else {
-        if( item.shareType == SHKShareTypeVideo ){
+        if( item.shareType == SHKShareTypeImage ){
+            [oRequest release];
+            oRequest = nil;
+            oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:@"https://upload.twitter.com/1/statuses/update_with_media.xml"]
+                                                                            consumer:consumer
+                                                                               token:accessToken
+                                                                               realm:nil
+                                                                   signatureProvider:nil];
+            
+            [oRequest setHTTPMethod:@"POST"];
+        }
+        else{
             [oRequest prepare];
             
             NSDictionary * headerDict = [oRequest allHTTPHeaderFields];
@@ -623,17 +634,6 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
             [oRequest setValue:@"https://api.twitter.com/1/account/verify_credentials.json" forHTTPHeaderField:@"X-Auth-Service-Provider"];
             [oRequest setValue:oauthHeader forHTTPHeaderField:@"X-Verify-Credentials-Authorization"];
         }
-        else{
-            [oRequest release];
-            oRequest = nil;
-            oRequest = [[OAMutableURLRequest alloc] initWithURL:[NSURL URLWithString:@"https://upload.twitter.com/1/statuses/update_with_media.xml"]
-                                                                            consumer:consumer
-                                                                               token:accessToken
-                                                                               realm:nil
-                                                                   signatureProvider:nil];
-            
-            [oRequest setHTTPMethod:@"POST"];
-        }
 	}
 	
 	
@@ -647,11 +647,11 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 		dispKey = [NSString stringWithFormat:@"Content-Disposition: form-data; name=\"image\"; filename=\"%@\"\r\n", filename];
 	} else {
         switch (item.shareType) {
-            case SHKShareTypeVideo:
-                dispKey = [NSString stringWithFormat:@"Content-Disposition: form-data; name=\"media\"; filename=\"%@\"\r\n", filename];
+            case SHKShareTypeImage:
+                dispKey = [NSString stringWithFormat:@"Content-Disposition: form-data; name=\"media[]\"; filename=\"%@\"\r\n", filename];
                 break;
             default:
-                dispKey = [NSString stringWithFormat:@"Content-Disposition: form-data; name=\"media[]\"; filename=\"%@\"\r\n", filename];
+                dispKey = [NSString stringWithFormat:@"Content-Disposition: form-data; name=\"media\"; filename=\"%@\"\r\n", filename];
                 break;
         }
 	}
@@ -668,11 +668,11 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 	} else {
 		[body appendData:[[NSString stringWithFormat:@"--%@\r\n",boundary] dataUsingEncoding:NSUTF8StringEncoding]];
          switch (item.shareType) {
-            case SHKShareTypeVideo:
-                [body appendData:[[NSString stringWithString:@"Content-Disposition: form-data; name=\"message\"\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
-                break;
-            default:
+            case SHKShareTypeImage:
                 [body appendData:[[NSString stringWithString:@"Content-Disposition: form-data; name=\"status\"\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
+                 break;
+            default:
+                [body appendData:[[NSString stringWithString:@"Content-Disposition: form-data; name=\"message\"\r\n\r\n"] dataUsingEncoding:NSUTF8StringEncoding]];
                  break;
         }
 		[body appendData:[[item customValueForKey:@"status"] dataUsingEncoding:NSUTF8StringEncoding]];
@@ -710,10 +710,15 @@ static NSString *const kSHKTwitterUserInfo=@"kSHKTwitterUserInfo";
 		//SHKLog(@"found end string at %d, len %d",endingRange.location,endingRange.length);
 		
 		if (startingRange.location != NSNotFound && endingRange.location != NSNotFound) {
-			NSString *urlString = [dataString substringWithRange:NSMakeRange(startingRange.location + startingRange.length, endingRange.location - (startingRange.location + startingRange.length))];
-			//SHKLog(@"extracted string: %@",urlString);
-			[item setCustomValue:[NSString stringWithFormat:@"%@ %@",[item customValueForKey:@"status"],urlString] forKey:@"status"];
-			[self sendStatus];
+            if( item.shareType == SHKShareTypeImage ){
+                [self sendDidFinish] ;
+            }
+            else {
+                NSString *urlString = [dataString substringWithRange:NSMakeRange(startingRange.location + startingRange.length, endingRange.location - (startingRange.location + startingRange.length))];
+                //SHKLog(@"extracted string: %@",urlString);
+                [item setCustomValue:[NSString stringWithFormat:@"%@ %@",[item customValueForKey:@"status"],urlString] forKey:@"status"];
+                [self sendStatus];
+            }
 		} else {
 			[self handleUnsuccessfulTicket:data];
 		}
