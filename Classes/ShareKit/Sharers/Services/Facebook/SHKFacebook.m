@@ -237,7 +237,7 @@ static NSString *const kSHKFacebookUserInfo =@"kSHKFacebookUserInfo";
 {
   [[NSUserDefaults standardUserDefaults] removeObjectForKey:kSHKStoredItemKey];
   [self flushAccessToken];
-  [[self facebook] logout];
+  [[self facebook] logout:[[self facebook] sessionDelegate]];
 }
 
 #pragma mark -
