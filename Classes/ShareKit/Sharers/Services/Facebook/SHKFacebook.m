@@ -237,7 +237,7 @@ static NSString *const kSHKFacebookUserInfo =@"kSHKFacebookUserInfo";
 {
   [[NSUserDefaults standardUserDefaults] removeObjectForKey:kSHKStoredItemKey];
   [self flushAccessToken];
-  [[self facebook] logout:[[self facebook] sessionDelegate]];
+  [[self facebook] logout];
 }
 
 #pragma mark -
@@ -336,13 +336,13 @@ static NSString *const kSHKFacebookUserInfo =@"kSHKFacebookUserInfo";
 #pragma mark -
 #pragma mark FBDialogDelegate methods
 
-- (void)dialogDidComplete:(FBDialog2 *)dialog
+- (void)dialogDidComplete:(FBDialog *)dialog
 {
   [self sendDidFinish];  
     [self release]; //see [self send]
 }
 
-- (void)dialogDidNotComplete:(FBDialog2 *)dialog
+- (void)dialogDidNotComplete:(FBDialog *)dialog
 {
   [self sendDidCancel];
     [self release]; //see [self send]
@@ -364,20 +364,20 @@ static NSString *const kSHKFacebookUserInfo =@"kSHKFacebookUserInfo";
   }
 }
 
-- (void)dialogDidCancel:(FBDialog2*)dialog
+- (void)dialogDidCancel:(FBDialog*)dialog
 {
   [self sendDidCancel];
     [self release]; //see [self send]
 }
 
-- (void)dialog:(FBDialog2 *)dialog didFailWithError:(NSError *)error 
+- (void)dialog:(FBDialog *)dialog didFailWithError:(NSError *)error 
 {
   if (error.code != NSURLErrorCancelled)
     [self sendDidFailWithError:error];
     [self release]; //see [self send]
 }
 
-- (BOOL)dialog:(FBDialog2*)dialog shouldOpenURLInExternalBrowser:(NSURL*)url
+- (BOOL)dialog:(FBDialog*)dialog shouldOpenURLInExternalBrowser:(NSURL*)url
 {
     [self release]; //see [self promptAuthorization]. If callback happens, self will retain again.
 	return YES;
@@ -432,12 +432,12 @@ static NSString *const kSHKFacebookUserInfo =@"kSHKFacebookUserInfo";
 
 #pragma mark FBRequestDelegate methods
 
-- (void)requestLoading:(FBRequest2 *)request
+- (void)requestLoading:(FBRequest *)request
 {
   [self sendDidStart];
 }
 
-- (void)request:(FBRequest2 *)fbRequest didLoad:(id)result
+- (void)request:(FBRequest *)fbRequest didLoad:(id)result
 {   
     if ([fbRequest.url hasSuffix:@"/me"] && [result objectForKey:@"id"]) {
         [result convertNSNullsToEmptyStrings];
@@ -448,7 +448,7 @@ static NSString *const kSHKFacebookUserInfo =@"kSHKFacebookUserInfo";
     [self release]; //see [self send]
 }
 
-- (void)request:(FBRequest2*)aRequest didFailWithError:(NSError*)error 
+- (void)request:(FBRequest*)aRequest didFailWithError:(NSError*)error 
 {
     //if user revoked app permissions
     NSNumber *fbErrorCode = [[error.userInfo valueForKey:@"error"] valueForKey:@"code"];
